@@ -1,0 +1,116 @@
+﻿@page "/counter"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+
+
+<div class="user-form">
+    <h3>User Form</h3>
+
+    <EditForm Model="@LocalUser" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Name</label>
+            <InputText @bind-Value="LocalUser.Name" class="form-control" />
+            <ValidationMessage For="@(() => LocalUser.Name)" />
+        </div>
+
+        <div class="form-group">
+            <label>Address</label>
+            <InputText @bind-Value="LocalUser.Address" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label>Age</label>
+            <InputNumber @bind-Value="LocalUser.Age" class="form-control" />
+            <ValidationMessage For="@(() => LocalUser.Age)" />
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <!-- Manual binding instead of @bind -->
+            <InputText Value="LocalUser.Email" ValueChanged="OnEmailChanged" class="form-control" />
+            <ValidationMessage For="@(() => LocalUser.Email)" />
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">@ButtonText</button>
+        </div>
+    </EditForm>
+
+    @if (!string.IsNullOrWhiteSpace(StatusMessage))
+    {
+        <p class="status-message">@StatusMessage</p>
+    }
+</div>
+
+@code {
+    [Parameter] public UserModel User { get; set; }
+    [Parameter] public EventCallback<UserModel> OnSubmit { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Submit";
+
+    private UserModel LocalUser = new();
+    private bool IsSubmitting = false;
+    private string StatusMessage = "";
+
+    protected override void OnParametersSet()
+    {
+        // Copy model to avoid mutating parent directly
+        LocalUser = new UserModel
+        {
+            Name = User?.Name,
+            Address = User?.Address,
+            Age = User?.Age ?? 0,
+            Email = User?.Email
+        };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        IsSubmitting = true;
+
+        // Normalize email
+        LocalUser.Email = LocalUser.Email?.Trim().ToLower();
+
+        // Mock async uniqueness check
+        if (await IsEmailTaken(LocalUser.Email))
+        {
+            StatusMessage = "Email already exists.";
+            IsSubmitting = false;
+            return;
+        }
+
+        await OnSubmit.InvokeAsync(LocalUser);
+        StatusMessage = $"Submitted for {LocalUser.Name}";
+        IsSubmitting = false;
+    }
+
+    private void OnEmailChanged(string value)
+    {
+        LocalUser.Email = value?.Trim();
+    }
+
+    private Task<bool> IsEmailTaken(string email)
+    {
+        // Mock async check (replace with real service)
+        return Task.FromResult(email == "test@example.com");
+    }
+
+    public class UserModel
+    {
+        [Required(ErrorMessage = "Name is required")]
+        public string Name { get; set; }
+
+        public string Address { get; set; }
+
+        [Range(18, 120, ErrorMessage = "Must be an adult")]
+        public int Age { get; set; }
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string Email { get; set; }
+    }
+}
+

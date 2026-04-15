@@ -1,0 +1,64 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using Model;
+
+<div class="user-form">
+    <h3>Register Form</h3>
+
+    <EditForm Model="@User" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Name</label>
+            <InputText @bind-Value="User.Name" class="form-control" />
+            <ValidationMessage For="@(() => User.Name)" />
+        </div>
+
+        <div class="form-group">
+            <label>Address</label>
+            <InputText @bind-Value="User.Address" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label>Age</label>
+            <InputNumber @bind-Value="User.Age" class="form-control" />
+            <ValidationMessage For="@(() => User.Age)" />
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <!-- Manual binding instead of @bind -->
+            <InputText Value="User.Email"
+                       ValueChanged="OnEmailChanged"
+                       ValueExpression="@(() => User.Email)"
+                       class="form-control" />
+            <ValidationMessage For="@(() => User.Email)" />
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" disabled="@IsSubmitting">@ButtonText</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+     [Parameter] public UserModel User { get; set; }
+    [Parameter] public EventCallback<UserModel> OnSubmit { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Submit";
+
+    private bool IsSubmitting = false;
+
+    private async Task HandleValidSubmit()
+    {
+        IsSubmitting = true;
+        await OnSubmit.InvokeAsync(User);
+        IsSubmitting = false;
+    }
+
+    private void OnEmailChanged(string value)
+    {
+        User.Email = value?.Trim().ToLower();
+    }
+
+}

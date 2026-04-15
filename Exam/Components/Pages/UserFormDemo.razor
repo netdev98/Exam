@@ -1,0 +1,26 @@
+﻿@page "/userformdemo"
+
+@using Model;
+
+<UserForm User="@user" OnSubmit="HandleSubmit" ButtonText="Register" />
+
+<div class="submitted-data">
+    @if (submittedUser != null)
+    {
+        <h4>Submitted Data:</h4>
+        <p><strong>Name:</strong> @submittedUser.Name</p>
+        <p><strong>Address:</strong> @submittedUser.Address</p>
+        <p><strong>Age:</strong> @submittedUser.Age</p>
+        <p><strong>Email:</strong> @submittedUser.Email</p>
+    }
+</div>
+
+@code {
+    private UserModel user = new();
+    private UserModel? submittedUser;
+
+    private void HandleSubmit(UserModel model)
+    {
+        submittedUser = model;
+    }
+}

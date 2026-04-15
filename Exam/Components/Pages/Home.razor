@@ -1,0 +1,107 @@
+﻿@page "/"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using Model;
+
+
+<div class="container">
+    <div class="row">
+        <div class="user-form">
+            <h3>User Form 1</h3>
+
+            <EditForm Model="@User" OnValidSubmit="Save">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div>
+                    <label>Name</label>
+                    <InputText @bind-Value="User.Name" />
+                    <ValidationMessage For="@(() => User.Name)" />
+                </div>
+
+                <div>
+                    <label>Address</label>
+                    <InputText @bind-Value="User.Address" />
+                </div>
+
+                <div>
+                    <label>Age</label>
+                    <InputNumber @bind-Value="User.Age" />
+                    <ValidationMessage For="@(() => User.Age)" />
+                </div>
+
+                <div>
+                    <label>Email</label>
+                    <InputText @bind-Value="User.Email" />
+                    <ValidationMessage For="@(() => User.Email)" />
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary" @onclick="Save">@ButtonText</button>
+                    <button type="button" class="btn btn-secondary" @onclick="Clear">Clear</button>
+                </div>
+            </EditForm>
+
+            @if (!string.IsNullOrWhiteSpace(Message))
+            {
+                <p>@Message</p>
+            }
+        </div>
+
+        <UserForm User="@user" OnSubmit="HandleSubmit" ButtonText="Register" />
+
+        <div class="submitted-data">
+            @if (submittedUser != null)
+            {
+                <h4>Submitted Data:</h4>
+                <p><strong>Name:</strong> @submittedUser.Name</p>
+                <p><strong>Address:</strong> @submittedUser.Address</p>
+                <p><strong>Age:</strong> @submittedUser.Age</p>
+                <p><strong>Email:</strong> @submittedUser.Email</p>
+            }
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    [Parameter]
+    public UserModel User { get; set; } = new UserModel();
+    private UserModel user = new();
+
+    [Parameter]
+    public string ButtonText { get; set; } = "Save";
+
+    [Parameter]
+    public EventCallback<UserModel> OnSaved { get; set; }
+
+    private string Message = "";
+
+    private UserModel? submittedUser;
+
+    private void HandleSubmit(UserModel model)
+    {
+        submittedUser = model;
+    }
+
+    private async Task Save()
+    {
+        // Normalize email before submission
+        User.Email = User.Email?.Trim().ToLower();
+
+        // Raise event to parent
+        await OnSaved.InvokeAsync(User);
+
+        Message = $"Saved for {User.Name}";
+    }
+
+    private void Clear()
+    {
+        // Reset local model only, not parent-owned data
+        User = new UserModel();
+        Message = "Cleared";
+    }
+
+}
